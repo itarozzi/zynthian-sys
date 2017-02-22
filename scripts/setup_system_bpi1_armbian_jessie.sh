@@ -264,16 +264,13 @@ cp $ZYNTHIAN_SYS_DIR/etc/zynaddsubfxXML.cfg /root/.zynaddsubfxXML.cfg
 
 # Resize SD partition on first boot
 #sed -i -- "s/exit 0/\/zynthian\/zynthian-sys\/scripts\/rpi-wiggle\.sh/" /etc/rc.local
-#echo "exit 0" >> /etc/rc.local
+echo "exit 0" >> /etc/rc.local
 
 #************************************************
 #------------------------------------------------
 # Compile / Install Required Libraries
 #------------------------------------------------
 #************************************************
-
-###   .................. to be continued !!!
-
 
 #------------------------------------------------
 # Install Alsaseq Python Library
@@ -287,13 +284,15 @@ cd ..
 rm -f alsaseq-0.4.1.tar.gz
 
 #------------------------------------------------
-# Install NTK
+# Install NTK (http://non.tuxfamily.org/ntk/)
 #------------------------------------------------
 git clone git://git.tuxfamily.org/gitroot/non/fltk.git ntk
 cd ntk
 ./waf configure
 ./waf
 ./waf install
+
+
 
 #------------------------------------------------
 # Install pyliblo (liblo OSC library for Python)
@@ -355,6 +354,7 @@ rm -f jpmidi-0.2.tar.gz
 #------------------------------------------------
 # Install zynaddsubfx
 #------------------------------------------------
+apt-get -y install
 bash $ZYNTHIAN_RECIPE_DIR/install_zynaddsubfx.sh
 
 #------------------------------------------------
@@ -369,7 +369,36 @@ ln -s /usr/share/sounds/sf2/*.sf2 .
 #------------------------------------------------
 # Install Linuxsampler => TODO Upgrade to Version 2
 #------------------------------------------------
-apt-get -y install linuxsampler
+
+#TODO: linuxsampler not present in armbian repository, need to compile
+#apt-get -y install linuxsampler
+
+
+cd $ZYNTHIAN_SW_DIR
+wget --no-check-certificate http://download.linuxsampler.org/packages/libgig-4.0.0.tar.bz2
+tar xvf libgig-4.0.0.tar.bz2
+cd libgig-4.0.0
+./configure
+make -j 4
+make install
+cd ..
+
+apt-get -y install bison
+wget --no-check-certificate http://download.linuxsampler.org/packages/linuxsampler-2.0.0.tar.bz2
+tar xvf linuxsampler-2.0.0.tar.bz2
+cd linuxsampler-2.0.0/
+./configure
+
+#TODO : remove lscpparser, regenerated on make phase
+mv src/network/lscpparser.cpp src/network/lscpparser.cpp__
+
+make -j 4
+###   .................. to be continued !!!
+### Error compiling!!!!!
+
+make install
+
+
 
 #------------------------------------------------
 # Install Fantasia (linuxsampler Java GUI)
