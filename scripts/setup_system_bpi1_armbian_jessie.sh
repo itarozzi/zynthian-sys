@@ -1,14 +1,14 @@
 #!/bin/bash
 #******************************************************************************
 # ZYNTHIAN PROJECT: Zynthian Setup Script
-# 
+#
 # Setup a Zynthian Box in a fresh ARMBIAN 5.25 (Jessie) installation on BananaPI M1
-# 
+#
 # Copyright (C) 2015-2016 Fernando Moyano <jofemodo@zynthian.org>
 # Copyright (C) 2017      Ivan Tarozzi<itarozzi@gmail.com>
 #
 #******************************************************************************
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
 # published by the Free Software Foundation; either version 2 of
@@ -20,7 +20,7 @@
 # GNU General Public License for more details.
 #
 # For a full copy of the GNU General Public License see the LICENSE.txt file.
-# 
+#
 #******************************************************************************
 
 source zynthian_envars.sh
@@ -54,7 +54,7 @@ apt-get -y --force-yes install deb-multimedia-keyring
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5C808C2B65558117
 
 
-# TODO: Autostatic repo works for RPI only. 
+# TODO: Autostatic repo works for RPI only.
 # Autostatic Repo
 #wget -O - http://rpi.autostatic.com/autostatic.gpg.key| apt-key add -
 #wget -O /etc/apt/sources.list.d/autostatic-audio-raspbian.list http://rpi.autostatic.com/autostatic-audio-raspbian.list
@@ -73,7 +73,7 @@ apt-get -y remove isc-dhcp-client
 apt-get -y remove libgl1-mesa-dri
 
 # CLI Tools
-apt-get -y install psmisc tree joe 
+apt-get -y install psmisc tree joe
 apt-get -y install fbi scrot mpg123 p7zip-full i2c-tools
 
 # TODO: packages not found
@@ -97,15 +97,20 @@ liblash-compat-dev libffi-dev fontconfig-config libfontconfig1-dev libxft-dev \
 libexpat-dev libglib2.0-dev libgettextpo-dev libglibmm-2.4-dev libeigen3-dev \
 libsndfile-dev libsamplerate-dev libarmadillo-dev libreadline-dev lv2-c++-tools python3-numpy-dev \
 libavcodec56 libavformat56 libavutil54 libavresample2 python3-pyqt4
-# TODO: package wiringpi not found.... need to compile?
-#wiringpi 
+
+
+
+# wiringpi absent in Armbian repository, compile from source
+cd /
+git clone https://github.com/BPI-SINOVOIP/BPI-WiringPi.git -b BPI_M1_M1Plus
+cd BPI-WiringPi
+chmod +x ./build
+./build
 
 #libjack-dev-session
 #non-ntk-dev
 #libgd2-xpm-dev
 
-
-#=====================================   to be continued...
 
 # Python
 apt-get -y install python-dbus
@@ -118,7 +123,7 @@ apt-get -y autoremove
 
 #************************************************
 #------------------------------------------------
-# Create Zynthian Directory Tree & 
+# Create Zynthian Directory Tree &
 # Install Zynthian Software from repositories
 #------------------------------------------------
 #************************************************
@@ -131,6 +136,9 @@ mkdir zyncoder/build
 cd zyncoder/build
 cmake ..
 make
+
+
+
 
 # Zynthian UI
 cd $ZYNTHIAN_DIR
@@ -146,6 +154,8 @@ git clone -b $ZYNTHIAN_BRANCH --single-branch https://github.com/zynthian/zynthi
 # Zynthian Data
 cd $ZYNTHIAN_DIR
 git clone https://github.com/zynthian/zynthian-data.git
+
+
 
 # Zynthian Plugins => TODO! => Rethink plugins directory!!
 #git clone https://github.com/zynthian/zynthian-plugins.git
@@ -172,6 +182,8 @@ mkdir "$ZYNTHIAN_PLUGINS_DIR/lv2"
 mkdir $ZYNTHIAN_MY_PLUGINS_DIR
 mkdir "$ZYNTHIAN_MY_PLUGINS_DIR/lv2"
 
+
+
 # Copy some files
 cp -a $ZYNTHIAN_DATA_DIR/mod-pedalboards/*.pedalboard $ZYNTHIAN_MY_DATA_DIR/mod-pedalboards
 
@@ -183,24 +195,41 @@ cp -a $ZYNTHIAN_DATA_DIR/mod-pedalboards/*.pedalboard $ZYNTHIAN_MY_DATA_DIR/mod-
 
 #Change Hostname
 echo "zynthian" > /etc/hostname
-sed -i -e "s/minibian/zynthian/" /etc/hosts
+sed -i -e "s/bananapi/zynthian/" /etc/hosts
+
+
+
 
 # Copy "boot" config files
-cp $ZYNTHIAN_SYS_DIR/boot/* /boot
-sed -i -e "s/#AUDIO_DEVICE_DTOVERLAY/dtoverlay=hifiberry-dacplus/g" /boot/config.txt
+# TODO:   verificafre se e come gestire i parametri di boot!!!!!
+#cp $ZYNTHIAN_SYS_DIR/boot/* /boot
+#sed -i -e "s/#AUDIO_DEVICE_DTOVERLAY/dtoverlay=hifiberry-dacplus/g" /boot/config.txt
+
+
 
 # Copy "etc" config files
-cp $ZYNTHIAN_SYS_DIR/etc/modules /etc
-cp $ZYNTHIAN_SYS_DIR/etc/inittab /etc
+#TODO:   i moduli contenuti nel file modules di zynthian non sono presenti in Amrbian per BPI, e sovrascriverebbero quelli presenti
+# versificare quindi se occorre aggiungere l'equivalente dei seguenti moduli
+#stmpe-ts
+#i2c-dev
+#cp $ZYNTHIAN_SYS_DIR/etc/modules /etc
+
+#TODO: Armbian non sembra avere il file /etc/inittab !!!!
+#cp $ZYNTHIAN_SYS_DIR/etc/inittab /etc
+
+#TODO: verificare se questo file dbus viene processato!
 cp $ZYNTHIAN_SYS_DIR/etc/dbus-1/* /etc/dbus-1
-cp $ZYNTHIAN_SYS_DIR/etc/systemd/* /etc/systemd/system
+
+cp $ZYNTHIAN_SYS_DIR/etc/systemd/* /etc/systemd/system/
+
+#TODO: verificare.... a cosa serve???
 cp $ZYNTHIAN_SYS_DIR/etc/udev/rules.d/* /etc/udev/rules.d
 
 # Systemd Services
 systemctl daemon-reload
 systemctl enable dhcpcd
 systemctl enable avahi-daemon
-systemctl disable raspi-config
+#systemctl disable raspi-config
 systemctl disable cron
 systemctl disable rsyslog
 systemctl disable ntp
@@ -214,13 +243,16 @@ systemctl enable jack2
 systemctl enable mod-ttymidi
 systemctl enable zynthian
 
+
+
 # X11 Config
-mkdir /etc/X11/xorg.conf.d
+#mkdir /etc/X11/xorg.conf.d     #Already exists
 cp $ZYNTHIAN_SYS_DIR/etc/X11/xorg.conf.d/99-calibration.conf /etc/X11/xorg.conf.d
 cp $ZYNTHIAN_SYS_DIR/etc/X11/xorg.conf.d/99-pitft.conf /etc/X11/xorg.conf.d
 
 # Copy fonts to system directory
 cp -rf $ZYNTHIAN_UI_DIR/fonts/* /usr/share/fonts/truetype
+
 
 # User Config (root) =>
 # Set Zynthian Environment variables ...
@@ -231,14 +263,17 @@ echo "source $ZYNTHIAN_SYS_DIR/etc/profile.zynthian" >> /root/.profile
 cp $ZYNTHIAN_SYS_DIR/etc/zynaddsubfxXML.cfg /root/.zynaddsubfxXML.cfg
 
 # Resize SD partition on first boot
-sed -i -- "s/exit 0/\/zynthian\/zynthian-sys\/scripts\/rpi-wiggle\.sh/" /etc/rc.local
-echo "exit 0" >> /etc/rc.local
+#sed -i -- "s/exit 0/\/zynthian\/zynthian-sys\/scripts\/rpi-wiggle\.sh/" /etc/rc.local
+#echo "exit 0" >> /etc/rc.local
 
 #************************************************
 #------------------------------------------------
 # Compile / Install Required Libraries
 #------------------------------------------------
 #************************************************
+
+###   .................. to be continued !!!
+
 
 #------------------------------------------------
 # Install Alsaseq Python Library
@@ -361,4 +396,3 @@ cd $ZYNTHIAN_SYS_DIR/scripts
 #------------------------------------------------
 cd $ZYNTHIAN_SYS_DIR/scripts
 ./setup_plugins_rbpi.sh
-
