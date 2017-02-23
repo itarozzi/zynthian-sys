@@ -383,22 +383,30 @@ make -j 4
 make install
 cd ..
 
-apt-get -y install bison
+apt-get -y install bison libatomic-ops-dev
 wget --no-check-certificate http://download.linuxsampler.org/packages/linuxsampler-2.0.0.tar.bz2
 tar xvf linuxsampler-2.0.0.tar.bz2
 cd linuxsampler-2.0.0/
+
+
+#TODO : sqlite into repo is 2.8
+#*** Required sqlite version not found!
+#*** You need to have sqlite version 3.3 or higher for instruments database support to be enabled.
+#*** Support for instruments DB will be disabled!
 ./configure
+
+#TODO: need to patch the file src/common/RTMath.cpp
+# see: https://sourceforge.net/p/linuxsampler/mailman/message/32878699/
+
+#TODO: need to patch the file src/common/atomic.h
+#  see https://www.mail-archive.com/linuxsampler-devel@lists.sourceforge.net/msg01228.html
+#  see https://www.raspberrypi.org/forums/viewtopic.php?t=37011&p=943685
 
 #TODO : remove lscpparser, regenerated on make phase
 mv src/network/lscpparser.cpp src/network/lscpparser.cpp__
 
 make -j 4
-###   .................. to be continued !!!
-### Error compiling!!!!!
-
 make install
-
-
 
 #------------------------------------------------
 # Install Fantasia (linuxsampler Java GUI)
@@ -414,11 +422,20 @@ wget --no-check-certificate http://downloads.sourceforge.net/project/jsampler/Fa
 #------------------------------------------------
 sh $ZYNTHIAN_RECIPE_DIR/install_setbfree.sh
 
+#TODO: verificar se ok che la GUI non venga compilata e installata
+#Makefile:19: "Synth GUI will not be built"
+#Makefile:20: "either openGL/GLU is not available - install glu-dev, ftgl-dev"
+#Makefile:21: "or /usr/share/fonts/truetype/ttf-bitstream-vera/VeraBd.ttf cannot be found"
+
+
 #------------------------------------------------
 # Install MOD stuff
 #------------------------------------------------
 cd $ZYNTHIAN_SYS_DIR/scripts
 ./setup_mod.sh
+
+###   .................. to be continued !!!
+
 
 #------------------------------------------------
 # Install Plugins
